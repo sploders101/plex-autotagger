@@ -1,15 +1,15 @@
+mod extract_subtitles;
 mod get_st_track;
 mod interact;
+mod task_queue;
 
-use anyhow::anyhow;
 use clap::{Parser, Subcommand};
-use get_st_track::get_comparison_track;
+use extract_subtitles::extract_subtitles;
 use lazy_static::lazy_static;
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 lazy_static! {
-	static ref THEME: dialoguer::theme::ColorfulTheme =
-		dialoguer::theme::ColorfulTheme::default();
+	static ref THEME: dialoguer::theme::ColorfulTheme = dialoguer::theme::ColorfulTheme::default();
 }
 
 #[derive(Parser)]
@@ -20,7 +20,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum AutotaggerCommand {
+	/// Extracts subtitles from a set of mkv files, generating srt files.
 	ExtractSubtitles {
+		/// Skips running OCR on bitmap-style subtitles, leaving them in sub/idx format
+		#[arg(short, long)]
+		skip_ocr: bool,
+
 		#[arg(required = true)]
 		files: Vec<PathBuf>,
 	},
@@ -31,25 +36,8 @@ async fn main() -> anyhow::Result<()> {
 	let args = Cli::parse();
 
 	match args.command {
-		AutotaggerCommand::ExtractSubtitles { files } => {
-			for file in files {
-				let st_track = get_comparison_track(&file).await?;
-				let extract_result = Command::new("mkvextract")
-					.arg("tracks")
-					.arg(&file)
-					.arg(format!(
-						"{}:{}",
-						st_track.number - 1,
-						file.with_extension("").to_str().unwrap()
-					))
-					.spawn()
-					.unwrap()
-					.wait()
-					.unwrap();
-				if !extract_result.success() {
-					return Err(anyhow!("Failed to extract subtitles"));
-				}
-			}
+		AutotaggerCommand::ExtractSubtitles { skip_ocr, files } => {
+			extract_subtitles(skip_ocr, files).await?;
 		}
 	}
 
