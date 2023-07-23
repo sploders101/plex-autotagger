@@ -12,4 +12,5 @@ dialoguer = "0.10.4"
 indicatif = "0.17.5"
 lazy_static = "1.4.0"
 matroska = "0.25.0"
+tmdb-async = { path = "./tmdb-rs" }
 tokio = { version = "1.29.1", features = ["full"] }

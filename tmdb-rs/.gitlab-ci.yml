@@ -1,0 +1,79 @@
+stages:
+  - build
+  - deploy-dryrun
+  - deploy
+  - cleanup
+
+variables:
+  CARGO_INCREMENTAL: "0"
+  RUSTC_WRAPPER: /usr/bin/sccache
+  SCCACHE_ENDPOINT: rgw.storage.home.quadra-tec.net:7480
+  SCCACHE_S3_USE_SSL: "off"
+  SCCACHE_BUCKET: gitlab-sccache
+
+default:
+  before_script:
+    - |
+      if [ -d .cargo ]; then
+        rm -Rvf /usr/local/cargo/registry
+        time mv -f .cargo/registry /usr/local/cargo/
+      fi
+  after_script:
+    - if [ -d .cargo ]; then rm -Rvf .cargo; fi
+    - mkdir .cargo
+    - time mv -f /usr/local/cargo/registry .cargo/
+    - /usr/bin/sccache -s
+
+Build and test Rust code:
+  stage: build
+  image: mcronce/rust-pgo:1.71
+  cache:
+    - key: rust
+      paths:
+        - .cargo
+  script:
+    - cargo update
+    - cargo check
+    - cargo clippy --no-deps -- -D warnings
+    - cargo build
+    - cargo test
+    - cargo doc --no-deps
+
+cargo publish --dry-run:
+  stage: deploy-dryrun
+  image: mcronce/rust-pgo:1.71
+  cache:
+    - key: rust
+      policy: pull
+      paths:
+        - .cargo
+  script:
+    - cargo publish --dry-run
+
+cargo publish:
+  stage: deploy
+  image: mcronce/rust-pgo:1.71
+  cache:
+    - key: rust
+      policy: pull
+      paths:
+        - .cargo
+  script:
+    - sh -c 'cargo login "${CARGO_TOKEN}" && cargo publish'
+  only:
+    - tags
+
+cargo cache cleanup:
+  stage: cleanup
+  image: mcronce/cargo-cache
+  variables:
+    RUSTC_WRAPPER: ""
+  cache:
+    - key: rust
+      paths:
+        - .cargo
+  before_script: []
+  script:
+    - CARGO_HOME=.cargo cargo cache clean-unref
+  after_script: []
+
