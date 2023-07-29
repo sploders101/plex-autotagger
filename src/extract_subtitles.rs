@@ -32,13 +32,18 @@ pub async fn extract_subtitles(skip_ocr: bool, files: Option<Vec<PathBuf>>) -> a
 
 	for file in files {
 		let st_track = get_comparison_track(&file).await?;
+		let track_file = if &st_track.codec_id == "S_TEXT/UTF8" {
+			file.with_extension("srt")
+		} else {
+			file.with_extension("")
+		};
 		let extract_result = Command::new("mkvextract")
 			.arg("tracks")
 			.arg(&file)
 			.arg(format!(
 				"{}:{}",
 				st_track.number - 1,
-				file.with_extension("").to_str().unwrap()
+				track_file.to_str().unwrap()
 			))
 			.spawn()
 			.unwrap()
