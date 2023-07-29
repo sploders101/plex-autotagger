@@ -18,7 +18,7 @@ lazy_static! {
 }
 
 pub async fn tag_items() -> anyhow::Result<()> {
-	let episodes = HashMap::<u32, Episode>::from_iter(
+	let mut episodes = HashMap::<u32, Episode>::from_iter(
 		get_episodes_from_user()
 			.await?
 			.into_iter()
@@ -32,12 +32,21 @@ pub async fn tag_items() -> anyhow::Result<()> {
 	})
 	.await?;
 	let mut subtitle_files = HashMap::<u32, String>::default();
+	let mut missing_subtitles = Vec::<u32>::new();
 	for episode in episodes.values() {
-		subtitle_files.insert(
-			episode.id,
-			strip_subtitles(&get_subtitles(episode, manually_select_subs).await?),
-		);
-		// eprintln!("Got subtitles for {:?}", &episode);
+		let subtitles = get_subtitles(episode, manually_select_subs).await;
+		match subtitles {
+			Ok(subtitles) => {
+				subtitle_files.insert(episode.id, strip_subtitles(&subtitles));
+			},
+			Err(_) => {
+				missing_subtitles.push(episode.id);
+				println!("Skipping S{:02}E{:02}. No subtitles found.", episode.season_number, episode.episode_number);
+			}
+		}
+	}
+	for episode_id in missing_subtitles {
+		episodes.remove(&episode_id);
 	}
 
 	// Get list of subtitle files without extensions and their contents
