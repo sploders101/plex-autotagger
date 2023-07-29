@@ -2,11 +2,15 @@ mod extract_subtitles;
 mod get_st_track;
 mod interact;
 mod task_queue;
+mod autotagger;
+mod opensubtitles;
 
+use autotagger::tag_items;
 use clap::{Parser, Subcommand};
 use extract_subtitles::extract_subtitles;
 use lazy_static::lazy_static;
-use std::path::PathBuf;
+use tokio::fs;
+use std::{path::PathBuf, fs::FileType};
 
 lazy_static! {
 	static ref THEME: dialoguer::theme::ColorfulTheme = dialoguer::theme::ColorfulTheme::default();
@@ -26,9 +30,12 @@ enum AutotaggerCommand {
 		#[arg(short, long)]
 		skip_ocr: bool,
 
-		#[arg(required = true)]
+		#[arg()]
 		files: Vec<PathBuf>,
 	},
+
+	/// Scans subtitle files to identify requested episodes by way of subtitle comparison
+	Tag,
 }
 
 #[tokio::main]
@@ -37,9 +44,17 @@ async fn main() -> anyhow::Result<()> {
 
 	match args.command {
 		AutotaggerCommand::ExtractSubtitles { skip_ocr, files } => {
-			extract_subtitles(skip_ocr, files).await?;
+			if files.len() == 0 {
+				extract_subtitles(skip_ocr, None).await?;
+			} else {
+				extract_subtitles(skip_ocr, Some(files)).await?;
+			}
+		}
+		AutotaggerCommand::Tag => {
+			tag_items().await?;
 		}
 	}
 
 	return Ok(());
 }
+

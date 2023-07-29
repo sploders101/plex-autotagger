@@ -35,7 +35,7 @@ impl TaskQueue {
 		return Self { sender };
 	}
 
-	pub async fn add_task(&self, task: impl Future<Output = ()> + Send + 'static) {
+	pub fn add_task(&self, task: impl Future<Output = ()> + Send + 'static) {
 		self.sender.send(Box::pin(task)).unwrap();
 	}
 
@@ -43,8 +43,7 @@ impl TaskQueue {
 		let (sender, receiver) = oneshot::channel::<()>();
 		self.add_task(async move {
 			let _ = sender.send(());
-		})
-		.await;
+		});
 		receiver.await.unwrap();
 	}
 }

@@ -55,7 +55,7 @@ mod imdb_id {
 	}
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Genre {
 	#[getset(get_copy, vis = "pub")]
 	id: u16,
@@ -63,13 +63,13 @@ pub struct Genre {
 	name: CompactString,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Results<T> {
 	#[getset(deref_get, vis = "pub")]
 	results: Vec<T>,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Video {
 	#[getset(deref_get, vis = "pub")]
 	id: CompactString,
@@ -89,7 +89,7 @@ pub struct Video {
 }
 
 #[serde_as]
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Cast {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -111,7 +111,7 @@ pub struct Cast {
 }
 
 #[serde_as]
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct TVCast {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -131,7 +131,7 @@ pub struct TVCast {
 }
 
 #[serde_as]
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct TVCreator {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -147,7 +147,7 @@ pub struct TVCreator {
 }
 
 #[serde_as]
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Crew {
 	#[serde_as(as = "serde_with::hex::Hex")]
 	#[getset(get_copy, vis = "pub")]
@@ -166,7 +166,7 @@ pub struct Crew {
 	profile_path: Option<String>,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Credits {
 	#[getset(deref_get, vis = "pub")]
 	cast: Vec<Cast>,
@@ -174,7 +174,7 @@ pub struct Credits {
 	crew: Vec<Crew>,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct TVCredits {
 	#[getset(deref_get, vis = "pub")]
 	cast: Vec<TVCast>,
@@ -182,7 +182,7 @@ pub struct TVCredits {
 	crew: Vec<Crew>,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct LastEpisode {
 	#[serde(with = "date")]
 	#[getset(get_copy, vis = "pub")]
@@ -207,7 +207,7 @@ pub struct LastEpisode {
 	vote_count: u64,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct ProductionCompany {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -220,7 +220,7 @@ pub struct ProductionCompany {
 	origin_country: Option<CountryCode>,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Network {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -233,7 +233,7 @@ pub struct Network {
 	origin_country: Option<CountryCode>,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct Season {
 	#[serde(with = "date::option")]
 	#[getset(get_copy, vis = "pub")]
@@ -252,7 +252,7 @@ pub struct Season {
 	season_number: u32,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct Movie {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -294,7 +294,7 @@ pub struct Movie {
 	credits: Option<Credits>,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct TV {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -357,7 +357,7 @@ pub struct TV {
 	credits: Option<TVCredits>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct TVSeason {
 	#[serde(with = "Date")]
 	pub air_date: Date,
@@ -370,7 +370,7 @@ pub struct TVSeason {
 	pub vote_average: f32,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Episode {
 	#[serde(with = "Date")]
 	pub air_date: Date,
@@ -389,7 +389,7 @@ pub struct Episode {
 	// pub guest_stars: Vec<Cast>
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct SearchMovie {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -416,7 +416,7 @@ pub struct SearchMovie {
 	adult: bool,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct SearchTV {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -445,7 +445,7 @@ pub struct SearchTV {
 	vote_count: u32,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct FindMovie {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -470,7 +470,7 @@ pub struct FindMovie {
 	adult: bool,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct FindTV {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,
@@ -499,7 +499,7 @@ pub struct FindTV {
 	vote_count: u32,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct MovieSearchResult {
 	#[getset(get_copy, vis = "pub")]
 	page: u8,
@@ -511,7 +511,7 @@ pub struct MovieSearchResult {
 	results: Vec<SearchMovie>,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct TVSearchResult {
 	#[getset(get_copy, vis = "pub")]
 	page: u8,
@@ -523,7 +523,7 @@ pub struct TVSearchResult {
 	results: Vec<SearchTV>,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct FindResult {
 	#[getset(deref_get, vis = "pub")]
 	movie_results: Vec<FindMovie>,
@@ -531,7 +531,7 @@ pub struct FindResult {
 	tv_results: Vec<FindTV>
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Getset)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
 pub struct TVExternalIds {
 	#[getset(get_copy, vis = "pub")]
 	id: u32,

@@ -11,7 +11,7 @@ use serde::de::DeserializeOwned;
 
 mod model;
 use model::FindResult;
-pub use model::{Movie, MovieSearchResult, TV, TVExternalIds, TVSearchResult};
+pub use model::{Episode, Movie, MovieSearchResult, TVExternalIds, TVSearchResult, TV};
 
 #[cfg(test)]
 mod integration_tests;

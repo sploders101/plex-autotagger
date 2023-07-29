@@ -7,10 +7,19 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
+async-trait = "0.1.72"
 clap = { version = "4.3.17", features = ["derive"] }
 dialoguer = "0.10.4"
 indicatif = "0.17.5"
+lazy-regex = "3.0.0"
 lazy_static = "1.4.0"
 matroska = "0.25.0"
+rayon = "1.7.0"
+reqwest = { version = "0.11.18", features = ["json"] }
+serde = { version = "1.0.175", features = ["derive"] }
+serde_json = "1.0.103"
+strsim = "0.10.0"
 tmdb-async = { path = "./tmdb-rs" }
 tokio = { version = "1.29.1", features = ["full"] }
+tokio-stream = "0.1.14"
+urlencoding = "2.1.3"
