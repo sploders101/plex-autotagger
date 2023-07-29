@@ -377,15 +377,15 @@ pub struct Episode {
 	pub episode_number: u32,
 	pub id: u32,
 	pub name: String,
-	pub overview: String,
-	pub production_code: String,
-	pub runtime: u32,
+	pub overview: Option<String>,
+	pub production_code: Option<String>,
+	pub runtime: Option<u32>,
 	pub season_number: u32,
 	pub show_id: u32,
-	pub still_path: String,
-	pub vote_average: f32,
-	pub vote_count: u32,
-	pub crew: Vec<Crew>,
+	pub still_path: Option<String>,
+	pub vote_average: Option<f32>,
+	pub vote_count: Option<u32>,
+	pub crew: Option<Vec<Crew>>,
 	// pub guest_stars: Vec<Cast>
 }
 

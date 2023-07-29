@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use crate::{get_st_track::get_comparison_track, interact::interact_async};
+use crate::get_st_track::get_comparison_track;
 use std::path::PathBuf;
 use crate::task_queue::TaskQueue;
 use tokio::{fs, process::Command};
