@@ -9,8 +9,7 @@ use autotagger::tag_items;
 use clap::{Parser, Subcommand};
 use extract_subtitles::extract_subtitles;
 use lazy_static::lazy_static;
-use tokio::fs;
-use std::{path::PathBuf, fs::FileType};
+use std::path::PathBuf;
 
 lazy_static! {
 	static ref THEME: dialoguer::theme::ColorfulTheme = dialoguer::theme::ColorfulTheme::default();

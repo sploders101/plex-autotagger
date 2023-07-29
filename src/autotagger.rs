@@ -106,24 +106,65 @@ pub async fn tag_items() -> anyhow::Result<()> {
 		}
 	}
 
-	let mut matches_by_file = HashMap::<&PathBuf, Vec<(usize, u32)>>::new();
+	let mut matches_by_file = HashMap::<&PathBuf, Vec<(usize, &Episode)>>::new();
 	for (episode_id, matches) in matches_by_episode {
 		if matches.len() == 0 {
 			continue;
 		}
+		for (file_path, distance) in matches {
+			match matches_by_file.get_mut(file_path) {
+				Some(file_matches) => {
+					file_matches.push((distance, episodes.get(&episode_id).unwrap()));
+				}
+				None => {
+					matches_by_file.insert(file_path, vec![(distance, episodes.get(&episode_id).unwrap())]);
+				}
+			}
+		}
+	}
 
-		let episode = episodes.get(&episode_id).unwrap();
-		println!(
-			"S{}E{}: {} (differences: {}, closest negative match: {:?})",
-			episode.season_number,
-			episode.episode_number,
-			matches[0].0.file_name().unwrap().to_str().unwrap(),
-			matches[0].1,
-			matches.get(1).map(|inner| inner.1),
-		);
+	for (file_path, matches) in matches_by_file.iter_mut() {
+		matches.sort_unstable_by_key(|sort| sort.0);
+
+		let mkv_file = file_path.with_extension("mkv");
+		let srt_file = file_path.with_extension("srt");
+
+		let mut rename_to = match matches.len() {
+			0 => {
+				println!("{:?} => ??? (No match found)", *file_path);
+				None
+			}
+			1 => {
+				let filename = format_filename(matches[0].1);
+				println!("{:?} => {:?}\n    distance:         {}\n    closest_negative: n/a", &mkv_file, &filename, matches[0].0);
+				Some(filename)
+			}
+			_ => {
+				let filename = format_filename(matches[0].1);
+				println!("{:?} => {:?}\n    distance:         {}\n    closest negative: {}", &mkv_file, &filename, matches[0].0, matches[1].0);
+				Some(filename)
+			}
+		};
+
+		let rename = interact(|| {
+			Confirm::with_theme(&*THEME)
+				.with_prompt("Rename file?")
+				.interact()
+		}).await?;
+		if !rename {
+			rename_to = None;
+		}
+		if let Some(rename_to) = rename_to {
+			fs::rename(mkv_file, rename_to).await.context("Couldn't rename mkv file")?;
+			fs::remove_file(srt_file).await.context("Failed to remove srt file")?;
+		}
 	}
 
 	return Ok(());
+}
+
+fn format_filename(episode: &Episode) -> PathBuf {
+	return PathBuf::from(format!("S{:02}E{:02} - {}.mkv", episode.season_number, episode.episode_number, episode.name));
 }
 
 pub async fn get_episodes_from_user() -> anyhow::Result<Vec<Episode>> {
