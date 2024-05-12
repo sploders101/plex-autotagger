@@ -8,6 +8,53 @@ use time::Date;
 
 time::serde::format_description!(date, Date, "[year]-[month]-[day]");
 
+mod optional_date {
+	use serde::{de::Visitor, Deserializer, Serializer};
+	use time::{format_description, Date};
+	use lazy_static::lazy_static;
+
+	lazy_static! {
+		static ref DATE_FORMAT: Vec<format_description::FormatItem<'static>> = format_description::parse("[year]-[month]-[day]").unwrap();
+	}
+
+	struct OptionalDateVisitor;
+	impl<'a> Visitor<'a> for OptionalDateVisitor {
+		type Value = Option<Date>;
+		fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+			write!(formatter, "an empty string or a date-string of format '[year]-[month]-[day]'")
+		}
+		fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+		where
+			E: serde::de::Error,
+		{
+			if v == "" {
+				return Ok(None);
+			}
+			return Ok(Some(Date::parse(v, &DATE_FORMAT).map_err(|err| E::custom(err))?));
+		}
+	}
+
+	pub fn serialize<S>(obj: &Option<Date>, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		match obj {
+			Some(date) => serializer.serialize_str(
+				&date
+					.format(&DATE_FORMAT)
+					.unwrap(),
+			),
+			None => serializer.serialize_str(""),
+		}
+	}
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Date>, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		deserializer.deserialize_any(OptionalDateVisitor)
+	}
+}
+
 #[inline]
 fn country_code<'de, D: Deserializer<'de>>(de: D) -> Result<Option<CountryCode>, D::Error> {
 	use serde::de::{Error, Unexpected};
@@ -16,24 +63,36 @@ fn country_code<'de, D: Deserializer<'de>>(de: D) -> Result<Option<CountryCode>,
 		Some("") => Ok(None),
 		Some(s) if s.len() == 2 => match CountryCode::for_alpha2_caseless(s) {
 			Ok(v) => Ok(Some(v)),
-			Err(_) => Err(D::Error::invalid_value(Unexpected::Str(s), &"any 2-letter ISO 3166-1 country code"))
+			Err(_) => Err(D::Error::invalid_value(
+				Unexpected::Str(s),
+				&"any 2-letter ISO 3166-1 country code",
+			)),
 		},
-		Some(s) => Err(D::Error::invalid_value(Unexpected::Str(s), &"any 2-letter ISO 3166-1 country code"))
+		Some(s) => Err(D::Error::invalid_value(
+			Unexpected::Str(s),
+			&"any 2-letter ISO 3166-1 country code",
+		)),
 	}
 }
 
 mod imdb_id {
-	use serde::{Deserialize, Deserializer};
 	use serde::de::{Error, Unexpected};
+	use serde::{Deserialize, Deserializer};
 
 	#[inline]
 	fn from_str<'de, D: Deserializer<'de>>(s: &str) -> Result<u32, D::Error> {
-		if(s.len() < 3 || &s[..2] != "tt") {
-			return Err(D::Error::invalid_value(Unexpected::Str(s), &"a signed integer prefixed by \"tt\""));
+		if (s.len() < 3 || &s[..2] != "tt") {
+			return Err(D::Error::invalid_value(
+				Unexpected::Str(s),
+				&"a signed integer prefixed by \"tt\"",
+			));
 		}
 		match s[2..].parse() {
 			Ok(v) => Ok(v),
-			Err(_) => Err(D::Error::invalid_value(Unexpected::Str(s), &"a signed integer prefixed by \"tt\""))
+			Err(_) => Err(D::Error::invalid_value(
+				Unexpected::Str(s),
+				&"a signed integer prefixed by \"tt\"",
+			)),
 		}
 	}
 
@@ -46,10 +105,12 @@ mod imdb_id {
 	pub(super) mod option {
 		use super::*;
 		#[inline]
-		pub(crate) fn deserialize<'de, D: Deserializer<'de>>(de: D) -> Result<Option<u32>, D::Error> {
+		pub(crate) fn deserialize<'de, D: Deserializer<'de>>(
+			de: D,
+		) -> Result<Option<u32>, D::Error> {
 			match Option::<&str>::deserialize(de)? {
 				Some(s) => Ok(Some(from_str::<D>(s)?)),
-				None => Ok(None)
+				None => Ok(None),
 			}
 		}
 	}
@@ -184,9 +245,9 @@ pub struct TVCredits {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Getset)]
 pub struct LastEpisode {
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	air_date: Date,
+	air_date: Option<Date>,
 	#[getset(get_copy, vis = "pub")]
 	episode_number: u32,
 	#[getset(get_copy, vis = "pub")]
@@ -269,9 +330,9 @@ pub struct Movie {
 	original_language: LanguageCode,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
 	overview: Option<String>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	release_date: Date,
+	release_date: Option<Date>,
 	#[getset(get_copy, vis = "pub")]
 	runtime: u32,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -303,9 +364,9 @@ pub struct TV {
 	created_by: Vec<TVCreator>,
 	#[getset(deref_get, vis = "pub")]
 	episode_run_time: Vec<u16>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	first_air_date: Date,
+	first_air_date: Option<Date>,
 	#[getset(deref_get, vis = "pub")]
 	genres: Vec<Genre>,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -314,9 +375,9 @@ pub struct TV {
 	in_production: bool,
 	#[getset(deref_get, vis = "pub")]
 	languages: Vec<LanguageCode>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	last_air_date: Date,
+	last_air_date: Option<Date>,
 	#[getset(as_ref_get, vis = "pub", type = "Option<&LastEpisode>")]
 	last_episode_to_air: Option<LastEpisode>,
 	#[getset(deref_get, vis = "pub")]
@@ -359,8 +420,8 @@ pub struct TV {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct TVSeason {
-	#[serde(with = "Date")]
-	pub air_date: Date,
+	#[serde(with = "optional_date")]
+	pub air_date: Option<Date>,
 	pub episodes: Vec<Episode>,
 	pub name: String,
 	pub overview: String,
@@ -372,8 +433,8 @@ pub struct TVSeason {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Episode {
-	#[serde(with = "Date")]
-	pub air_date: Date,
+	#[serde(with = "optional_date")]
+	pub air_date: Option<Date>,
 	pub episode_number: u32,
 	pub id: u32,
 	pub name: String,
@@ -401,9 +462,9 @@ pub struct SearchMovie {
 	original_language: LanguageCode,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
 	overview: Option<String>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	release_date: Date,
+	release_date: Option<Date>,
 	#[getset(deref_get, vis = "pub")]
 	genre_ids: Vec<u16>,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -428,9 +489,9 @@ pub struct SearchTV {
 	original_language: LanguageCode,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
 	overview: Option<String>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	first_air_date: Date,
+	first_air_date: Option<Date>,
 	#[getset(deref_get, vis = "pub")]
 	genre_ids: Vec<u16>,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -457,9 +518,9 @@ pub struct FindMovie {
 	original_language: LanguageCode,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
 	overview: Option<String>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	release_date: Date,
+	release_date: Option<Date>,
 	#[getset(deref_get, vis = "pub")]
 	genre_ids: Vec<u16>,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -482,9 +543,9 @@ pub struct FindTV {
 	original_language: LanguageCode,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
 	overview: Option<String>,
-	#[serde(with = "date")]
+	#[serde(with = "optional_date")]
 	#[getset(get_copy, vis = "pub")]
-	first_air_date: Date,
+	first_air_date: Option<Date>,
 	#[getset(deref_get, vis = "pub")]
 	genre_ids: Vec<u16>,
 	#[getset(as_deref_get, vis = "pub", type = "Option<&str>")]
@@ -528,7 +589,7 @@ pub struct FindResult {
 	#[getset(deref_get, vis = "pub")]
 	movie_results: Vec<FindMovie>,
 	#[getset(deref_get, vis = "pub")]
-	tv_results: Vec<FindTV>
+	tv_results: Vec<FindTV>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize, Getset)]
@@ -546,7 +607,7 @@ pub struct TVExternalIds {
 	tvrage_id: Option<u32>,
 	facebook_id: Option<CompactString>,
 	instagram_id: Option<CompactString>,
-	twitter_id: Option<CompactString>
+	twitter_id: Option<CompactString>,
 }
 
 impl TVExternalIds {
@@ -575,4 +636,3 @@ impl TVExternalIds {
 		self.twitter_id.as_deref()
 	}
 }
-

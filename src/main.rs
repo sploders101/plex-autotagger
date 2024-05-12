@@ -4,6 +4,7 @@ mod interact;
 mod task_queue;
 mod autotagger;
 mod opensubtitles;
+mod global_vars;
 
 use autotagger::tag_items;
 use clap::{Parser, Subcommand};

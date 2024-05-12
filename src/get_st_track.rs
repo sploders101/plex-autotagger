@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use dialoguer::Select;
 use matroska::{Track, Tracktype};
 use std::path::Path;
@@ -7,10 +7,10 @@ use crate::{interact::interact, THEME};
 
 /// Gets the track to be used for comparison with OST, attempting to automatically
 /// deduce the best one or by prompting the user.
-pub async fn get_comparison_track(file: &Path) -> anyhow::Result<Track> {
+pub async fn get_comparison_track(file: &Path) -> anyhow::Result<Option<Track>> {
 	let mut tracks = get_subtitle_tracks(file)?;
 	if tracks.len() == 0 {
-		return Err(anyhow!("No valid subtitle tracks found"));
+		return Ok(None);
 	}
 	let default_track = get_default_track(&tracks).cloned();
 	let selected_track = match default_track {
@@ -37,7 +37,7 @@ pub async fn get_comparison_track(file: &Path) -> anyhow::Result<Track> {
 		}
 	};
 
-	return Ok(selected_track);
+	return Ok(Some(selected_track));
 }
 
 /// Tries to narrow down which subtitles track is preferrable.

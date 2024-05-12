@@ -1695,6 +1695,7 @@ dependencies = [
  "isocountry",
  "isolanguage-1",
  "itertools",
+ "lazy_static",
  "reqwest",
  "serde",
  "serde_with",
