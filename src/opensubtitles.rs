@@ -50,6 +50,7 @@ pub async fn get_ost_auth() -> anyhow::Result<Arc<str>> {
 
 			let response: LoginResponse = HTTP_CLIENT
 				.post("https://api.opensubtitles.com/api/v1/login")
+				.header("User-Agent", "plex-autotagger")
 				.header("Api-Key", &*OST_API_KEY)
 				.json(&json!({
 					"username": login_creds.0,
@@ -77,6 +78,7 @@ impl AuthenticateOST for reqwest::RequestBuilder {
 	async fn authenticate_ost(self) -> anyhow::Result<Self> {
 		let user_token = get_ost_auth().await?;
 		return Ok(self
+			.header("User-Agent", "plex-autotagger")
 			.header("Api-Key", &*OST_API_KEY)
 			.header("Authorization", String::from("Bearer ") + &*user_token));
 	}
